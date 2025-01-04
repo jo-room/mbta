@@ -1,0 +1,326 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MBTA timings</title>
+    </head>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            padding: 10px;
+/*            font-size: 2em;*/
+        }
+        h2 {
+            font-size: 1em;
+            margin-block-end: 0;
+        }
+        #content {
+            font-size: 1.2em;
+        }
+        /*#clock {
+            font-size: 1em;
+        }*/
+    </style>
+    <body>
+        <div>
+            <span id="clock"></span>
+            <span>Polls every minute</span>
+        </div>
+        <div id="message"></div>
+        <div id="content"></div>
+        <script type="text/javascript">
+            var stopNums = []
+            var stopConfig = {}
+            
+            var msPerMin = 60 * 1000; // milliseconds per min
+            var msPer55Min = 55 * msPerMin; // milliseconds per 55 min
+            var msPerHour = 60 * msPerMin; // milliseconds per hour
+            
+            var pollingInterval = msPerMin;
+            var pollNum = 0
+            var latestReturnedPollNum = 0
+            
+            var pollIntervalID;
+            
+            var predictionData;
+
+            var apiKey = getQueryVariable("key")
+
+            getAndSetStops()
+
+            function getAndSetStops(){
+                var stopsString = getQueryVariable("stops")
+                var stopConfigs = stopsString.split(",");
+                var stopMinutesAway = {}
+
+                for (var i = 0; i < stopConfigs.length; i++) {
+                    if (stopConfigs[i].indexOf("(") !== -1) { // if contains (
+                        var splitStopConfig = stopConfigs[i].split("(")
+                        if (splitStopConfig[1].slice(-1) !== ")") {
+                            document.getElementById("message").innerText = "Error in stop configuration, missing closing parenthesis"
+                        }
+                        stopNums.push(splitStopConfig[0])
+                        stopMinutesAway[splitStopConfig[0]] = splitStopConfig[1].slice(0, -1)
+                    } else {
+                        stopNums.push(stopConfigs[i])
+                    }
+                }
+
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function(event) {
+                    if (xhttp.readyState == XMLHttpRequest.DONE) {
+                        var stopsData = JSON.parse(xhttp.response).data
+                        for (var i = 0; i < stopNums.length; i++) {
+                            var stopData;
+                            for (var j = 0; j < stopsData.length; j++) {
+                                if (stopNums[i] == stopsData[j].id) {
+                                    stopData = stopsData[j]
+                                }
+                            }
+
+                            var el = document.createElement('div');
+                            el.setAttribute('id', "stop-"+ stopNums[i])
+                            var title;
+                            if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["name"]) {
+                                title = stopConfig[stopNums[i]]["name"]
+                            }
+                            else if (stopData.attributes.description){
+                                title = stopData.attributes.description
+                            } else {
+                               title = stopData.attributes.name
+                            }
+
+                            if (stopMinutesAway.hasOwnProperty(stopNums[i])) {
+                                title += " (" + stopMinutesAway[stopNums[i]] + "min)"
+                            }
+
+                            el.innerHTML = '<h2 id="stop-title-' + stopNums[i] + '">' + title + '</h2><div id="stop-body-' + stopNums[i] +'"></div>';
+                            document.getElementById("content").appendChild(el)
+                       }
+                       callAPIs()
+                    }
+                };
+                pollIntervalID = setInterval(callAPIs, pollingInterval);
+                xhttp.open("GET", "https://api-v3.mbta.com/stops" + "?filter[id]=" + stopNums.join(",") + "&fields[stop]=name,description", true);
+                xhttp.setRequestHeader('x-api-key', apiKey)
+                xhttp.send();
+            }
+
+
+            function callAPIs() {
+                console.log('polling', pollNum)
+                getPredictions()
+            }
+
+            function getPredictions(){
+                var xhttp = new XMLHttpRequest();
+                pollNum++;
+                var currentPollNum = pollNum
+
+                var now = new Date()
+                var hours = now.getHours();
+                var minutes = now.getMinutes();
+                if (minutes < 10) {
+                    minutes = "0" + minutes
+                }
+                var timeMessage;
+                if (hours < 12){
+                    timeMessage = hours + ":" + minutes + "am"
+                } else if (hours == 12) {
+                    timeMessage = hours + ":" + minutes + "pm"
+                } else {
+                    timeMessage = hours - 12 + ":" + minutes + "pm"
+                }
+                document.getElementById("clock").innerText = timeMessage
+            
+                xhttp.onerror = function(event) {
+                    document.getElementById("message").innerText = event
+                }
+                xhttp.onreadystatechange = function(event) {
+                    // only update if it's the most recent request to have come back
+                    if (xhttp.readyState == XMLHttpRequest.DONE && latestReturnedPollNum < currentPollNum) {
+                        latestReturnedPollNum = currentPollNum;
+                        predictionData = JSON.parse(xhttp.response).data
+                        updateUI()
+                    }
+                };
+                xhttp.open("GET", "https://api-v3.mbta.com/predictions/?filter[stop]=" + stopNums.join(",") + "&sort=arrival_time", true);
+                xhttp.setRequestHeader('x-api-key', apiKey)
+                xhttp.send();
+            }
+
+
+            function updateUI(){
+                if (predictionData) {
+                    updatePredictions()
+                }
+            }
+
+            function updatePredictions(){
+                var predictions = {}
+                for (var i = 0; i < stopNums.length; i++) {
+                    predictions[stopNums[i]] = []
+                }
+
+                for (var i = 0; i < predictionData.length; i++) {
+                    var prediction = predictionData[i]
+                    var stopNum = prediction.relationships.stop.data.id
+
+                    if (stopConfig[stopNum] && stopConfig[stopNum]["maxNumPredictions"] && predictions[stopNum].length >= stopConfig[stopNum]["maxNumPredictions"]) {
+                        continue;
+                    }
+
+                    var vehicleId;
+                    if (prediction.relationships.vehicle.data) {
+                        vehicleId = prediction.relationships.vehicle.data.id
+                    }
+                    predictions[stopNum].push({
+                        'id': prediction.id,
+                        'route': prediction.relationships.route.data.id,
+                        'status': prediction.attributes.status,
+                        'arrivalTime': prediction.attributes.arrival_time,
+                        'departureTime': prediction.attributes.departure_time,
+                        'arrivalUncertainty': prediction.attributes.arrival_uncertainty,
+                        'vehicleId': vehicleId,
+                    })
+                }
+
+                var now = Date.now()
+                for (var i = 0; i < stopNums.length; i++) {
+                    var newStopEl = document.createElement('div');
+                    newStopEl.setAttribute('id', "stop-body-"+ stopNums[i])
+
+                    // sort by arrival/departure time
+                    predictions[stopNums[i]].sort(function(a, b) {
+                        var aSortTime = a.arrivalTime
+                        if (!aSortTime) {
+                            aSortTime = a.departureTime
+                        }
+                        var bSortTime = b.arrivalTime
+                        if (!bSortTime) {
+                            bSortTime = b.departureTime
+                        }
+                        return aSortTime.localeCompare(bSortTime);
+                    });
+
+                    for (var j = 0; j < predictions[stopNums[i]].length; j++) {
+                        prediction = predictions[stopNums[i]][j]
+                        var showNegative = false;
+                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["showNegative"]) {
+                            showNegative = true;
+                        }
+
+                        var routeName;
+                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["routeName"]) {
+                            routeName = stopConfig[stopNums[i]]["routeName"]
+                        } else {
+                            routeName = prediction.route
+                        }
+
+                        var showVehicleId = false;
+                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["showVehicleId"]) {
+                            showVehicleId = true;
+                        }
+
+                        var predictionMessage = formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId)
+
+                        if (predictionMessage) {
+                            var predictionEl = document.createElement('div');
+                            predictionEl.innerText = predictionMessage
+                            newStopEl.appendChild(predictionEl)
+                        }
+                    }
+                    document.getElementById("stop-body-"+stopNums[i]).innerHTML = newStopEl.innerHTML
+                }
+            }
+
+            function formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId){
+                var predictedTime
+                if (!prediction.arrivalTime){
+                    predictedTime = new Date(prediction.departureTime)
+                } else {
+                    predictedTime = new Date(prediction.arrivalTime)       
+                }
+                var minLeft = Math.round((predictedTime - now) / msPerMin)
+                
+                var timeMessage = "";
+                
+                if (minLeft < 0 && !showNegative) {
+                    return null
+                } else if (minLeft < 60) {
+                    timeMessage = minLeft + " min"
+                } else {
+                    var hours = predictedTime.getHours();
+                    var minutes = predictedTime.getMinutes();
+                    if (minutes < 10) {
+                        minutes = "0" + minutes
+                    }
+                    if (hours < 12){
+                        timeMessage = hours + "." + minutes + " am"
+                    } else if (hours == 12) {
+                        timeMessage = hours + "." + minutes + " pm"
+                    } else {
+                        timeMessage = hours - 12 + "." + minutes + " pm"
+                    }
+                }
+
+                var predictionMessage = routeName + ": " + timeMessage
+
+                if (prediction.status){
+                    predictionMessage += " - " + prediction.status
+                }
+
+                // https://github.com/mbta/gtfs-documentation/blob/master/reference/gtfs-realtime.md#uncertainty-values
+                // Mushing together both bus and rail codes
+                if (prediction.arrivalUncertainty){
+                    switch (true) {
+                        case prediction.arrivalUncertainty == 60:
+                            // Train: trip has started
+                            break;
+                        case prediction.arrivalUncertainty == 120:
+                            // Train: A terminal/reverse trip departure for a trip that has NOT started and a train is awaiting departure at the origin
+                            predictionMessage += " ~ waiting at origin"
+                            break;
+                        case prediction.arrivalUncertainty == 360:
+                            // Train: A terminal/reverse trip for a trip that has NOT started and a train is completing a previous trip
+                            predictionMessage += " ~ completing prev trip"
+                            break;
+                            // return null; // THIS IS A RETURN
+                        case prediction.arrivalUncertainty < 300:
+                            // Bus: Valid real-time prediction
+                            break;
+                        case prediction.arrivalUncertainty == 300:
+                            // Bus: Real-time prediction not available. This code is primarily used when a vehicle has not yet been assigned to the trip, (i.e. because the block has not started yet). It is a schedule-based prediction, but we adjust the schedule-based prediction time using observed historical travel times to make predictions more accurate than the schedule.
+                            predictionMessage += " ~ adjusted schedule"
+                            break;
+                        case prediction.arrivalUncertainty == 301:
+                            // Bus: Valid real-time prediction, though the bus appears to be stalled or significantly delayed and predictions are not as accurate
+                            predictionMessage += " ~ stalled/delayed"
+                            break;
+                        case prediction.arrivalUncertainty > 301:
+                            // Bus: Likely invalid prediction, recommend not showing anything (and not showing scheduled time), very rare situation.
+                            return null; // THIS IS A RETURN
+                        default:
+                            predictionMessage += " ~ unexpected code spot"
+                    }
+                }
+
+                if (showVehicleId) {
+                    predictionMessage += " - " + prediction.vehicleId
+                }
+                
+                return predictionMessage
+            }
+
+            function getQueryVariable(variable) {
+               var query = window.location.search.substring(1);
+               var vars = query.split("&");
+               for (var i=0;i<vars.length;i++) {
+                   var pair = vars[i].split("=");
+                   if(pair[0] == variable){return pair[1];}
+               }
+               return(false);
+           }
+        </script>
+    </body>
+</html>
