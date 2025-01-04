@@ -19,7 +19,7 @@ Config options
 }
 ```
 
-E.g.: `https://jo-room.github.io/mbta/?stops=191,70075&key=<MBTA API KEY>config={"191":{"message":"5min","filterRoutes":["93"]},"70075":{"maxNumPredictions":5}}`
+E.g.: `https://jo-room.github.io/mbta/?stops=191,70075&key=<MBTA API KEY>&config={"191":{"message":"5min","filterRoutes":["93"]},"70075":{"maxNumPredictions":5}}`
 
 <img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
 
