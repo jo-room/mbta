@@ -30,7 +30,7 @@
         <div id="content"></div>
         <script type="text/javascript">
             var stopNums = []
-            var stopConfig = {}
+            var stopConfigs = {}
             
             var msPerMin = 60 * 1000; // milliseconds per min
             var msPer55Min = 55 * msPerMin; // milliseconds per 55 min
@@ -49,20 +49,27 @@
             getAndSetStops()
 
             function getAndSetStops(){
-                var stopsString = getQueryVariable("stops")
-                var stopConfigs = stopsString.split(",");
+                var stops = getQueryVariable("stops").split(",");
                 var stopMinutesAway = {}
 
-                for (var i = 0; i < stopConfigs.length; i++) {
-                    if (stopConfigs[i].indexOf("(") !== -1) { // if contains (
-                        var splitStopConfig = stopConfigs[i].split("(")
+                for (var i = 0; i < stops.length; i++) {
+                    if (stops[i].indexOf("(") !== -1) { // if contains (
+                        var splitStopConfig = stops[i].split("(")
                         if (splitStopConfig[1].slice(-1) !== ")") {
                             document.getElementById("message").innerText = "Error in stop configuration, missing closing parenthesis"
                         }
-                        stopNums.push(splitStopConfig[0])
-                        stopMinutesAway[splitStopConfig[0]] = splitStopConfig[1].slice(0, -1)
+                        var stopNum = splitStopConfig[0]
+                        stopNums.push(stopNum)
+                        stopConfigs[stopNum] = {}
+
+                        var stopConfigKeyPairs = splitStopConfig[1].slice(0, -1).split(",")
+
+                        for (var j = 0; j < stopConfigKeyPairs.length; j++) {
+                            var stopConfigKeyPairsSplit = stopConfigKeyPairs[j].split(":")
+                            stopConfigs[stopNum][stopConfigKeyPairsSplit[0]] = stopConfigKeyPairsSplit[1]
+                        }
                     } else {
-                        stopNums.push(stopConfigs[i])
+                        stopNums.push(stops[i])
                     }
                 }
 
@@ -81,8 +88,8 @@
                             var el = document.createElement('div');
                             el.setAttribute('id', "stop-"+ stopNums[i])
                             var title;
-                            if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["name"]) {
-                                title = stopConfig[stopNums[i]]["name"]
+                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["name"]) {
+                                title = stopConfigs[stopNums[i]]["name"]
                             }
                             else if (stopData.attributes.description){
                                 title = stopData.attributes.description
@@ -90,8 +97,8 @@
                                title = stopData.attributes.name
                             }
 
-                            if (stopMinutesAway.hasOwnProperty(stopNums[i])) {
-                                title += " (" + stopMinutesAway[stopNums[i]] + "min)"
+                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["msg"]) {
+                                title += " (" + stopConfigs[stopNums[i]]["msg"] + ")"
                             }
 
                             el.innerHTML = '<h2 id="stop-title-' + stopNums[i] + '">' + title + '</h2><div id="stop-body-' + stopNums[i] +'"></div>';
@@ -166,7 +173,7 @@
                     var prediction = predictionData[i]
                     var stopNum = prediction.relationships.stop.data.id
 
-                    if (stopConfig[stopNum] && stopConfig[stopNum]["maxNumPredictions"] && predictions[stopNum].length >= stopConfig[stopNum]["maxNumPredictions"]) {
+                    if (stopConfigs[stopNum] && stopConfigs[stopNum]["maxNumPredictions"] && predictions[stopNum].length >= stopConfigs[stopNum]["maxNumPredictions"]) {
                         continue;
                     }
 
@@ -174,15 +181,26 @@
                     if (prediction.relationships.vehicle.data) {
                         vehicleId = prediction.relationships.vehicle.data.id
                     }
-                    predictions[stopNum].push({
-                        'id': prediction.id,
-                        'route': prediction.relationships.route.data.id,
-                        'status': prediction.attributes.status,
-                        'arrivalTime': prediction.attributes.arrival_time,
-                        'departureTime': prediction.attributes.departure_time,
-                        'arrivalUncertainty': prediction.attributes.arrival_uncertainty,
-                        'vehicleId': vehicleId,
-                    })
+
+                    var shouldInclude = true
+                    if (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"]) {
+                        var filterRoutes = stopConfigs[stopNum]["filterRoutes"].split("&")
+                        if (filterRoutes.indexOf(stopNum) !== -1) {
+                            shouldInclude = false
+                        }
+                    }
+
+                    if (shouldInclude) {
+                        predictions[stopNum].push({
+                            'id': prediction.id,
+                            'route': prediction.relationships.route.data.id,
+                            'status': prediction.attributes.status,
+                            'arrivalTime': prediction.attributes.arrival_time,
+                            'departureTime': prediction.attributes.departure_time,
+                            'arrivalUncertainty': prediction.attributes.arrival_uncertainty,
+                            'vehicleId': vehicleId,
+                        })
+                    }
                 }
 
                 var now = Date.now()
@@ -206,19 +224,19 @@
                     for (var j = 0; j < predictions[stopNums[i]].length; j++) {
                         prediction = predictions[stopNums[i]][j]
                         var showNegative = false;
-                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["showNegative"]) {
+                        if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["showNegative"]) {
                             showNegative = true;
                         }
 
                         var routeName;
-                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["routeName"]) {
-                            routeName = stopConfig[stopNums[i]]["routeName"]
+                        if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["routeName"]) {
+                            routeName = stopConfigs[stopNums[i]]["routeName"]
                         } else {
                             routeName = prediction.route
                         }
 
                         var showVehicleId = false;
-                        if (stopConfig[stopNums[i]] && stopConfig[stopNums[i]]["showVehicleId"]) {
+                        if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["showVehicleId"]) {
                             showVehicleId = true;
                         }
 
