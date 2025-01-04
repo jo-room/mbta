@@ -52,18 +52,33 @@
                 var stopsString = getQueryVariable("stops")
                 var stopConfigs = stopsString.split(",");
                 var stopMinutesAway = {}
+                var stopRouteFilter = {}
 
                 for (var i = 0; i < stopConfigs.length; i++) {
-                    if (stopConfigs[i].indexOf("(") !== -1) { // if contains (
-                        var splitStopConfig = stopConfigs[i].split("(")
-                        if (splitStopConfig[1].slice(-1) !== ")") {
+                    var remainingStopConfig = stopConfigs[i]
+                    // handle ()
+                    if (remainingStopConfig.indexOf("(") !== -1) {
+                        var firstSplit = remainingStopConfig.split("(")
+                        if (firstSplit[1].indexOf("(") === -1) {
                             document.getElementById("message").innerText = "Error in stop configuration, missing closing parenthesis"
                         }
-                        stopNums.push(splitStopConfig[0])
-                        stopMinutesAway[splitStopConfig[0]] = splitStopConfig[1].slice(0, -1)
-                    } else {
-                        stopNums.push(stopConfigs[i])
+                        var secondSplit = firstSplit[1].split(")")
+                        stopMinutesAway[firstSplit[0]] = secondSplit[0]
+                        remainingStopConfig = firstSplit[0] + secondSplit[1]
                     }
+
+                    // handle []
+                    if (remainingStopConfig.indexOf("(") !== -1) {
+                        var firstSplit = remainingStopConfig.split("(")
+                        if (firstSplit[1].indexOf("(") === -1) {
+                            document.getElementById("message").innerText = "Error in stop configuration, missing closing parenthesis"
+                        }
+                        var secondSplit = firstSplit[1].split(")")
+                        stopMinutesAway[firstSplit[0]] = secondSplit[0]
+                        remainingStopConfig = firstSplit[0] + secondSplit[1]
+                    }
+                        stopNums.push(stopConfigs[i])
+                    
                 }
 
                 var xhttp = new XMLHttpRequest();
