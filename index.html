@@ -29,7 +29,7 @@
         <div id="message"></div>
         <div id="content"></div>
         <script type="text/javascript">
-            var stopNums = []
+            var stopNums
             var stopConfigs = {}
             
             var msPerMin = 60 * 1000; // milliseconds per min
@@ -46,33 +46,19 @@
 
             var apiKey = getQueryVariable("key")
 
-            getAndSetStops()
+            configureStops()
 
-            function getAndSetStops(){
-                var stops = getQueryVariable("stops").split(",");
-                var stopMinutesAway = {}
+            function configureStops(){
+                stopNums = getQueryVariable("stops").split(",");
 
-                for (var i = 0; i < stops.length; i++) {
-                    if (stops[i].indexOf("(") !== -1) { // if contains (
-                        var splitStopConfig = stops[i].split("(")
-                        if (splitStopConfig[1].slice(-1) !== ")") {
-                            document.getElementById("message").innerText = "Error in stop configuration, missing closing parenthesis"
-                        }
-                        var stopNum = splitStopConfig[0]
-                        stopNums.push(stopNum)
-                        stopConfigs[stopNum] = {}
-
-                        var stopConfigKeyPairs = splitStopConfig[1].slice(0, -1).split(",")
-
-                        for (var j = 0; j < stopConfigKeyPairs.length; j++) {
-                            var stopConfigKeyPairsSplit = stopConfigKeyPairs[j].split(":")
-                            stopConfigs[stopNum][stopConfigKeyPairsSplit[0]] = stopConfigKeyPairsSplit[1]
-                        }
-                    } else {
-                        stopNums.push(stops[i])
-                    }
+                if (getQueryVariable("config")) {
+                    stopConfigs = JSON.parse(decodeURI(getQueryVariable("config")))
                 }
 
+                getAndSetStops()
+            }
+
+            function getAndSetStops(){
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function(event) {
                     if (xhttp.readyState == XMLHttpRequest.DONE) {
@@ -97,8 +83,8 @@
                                title = stopData.attributes.name
                             }
 
-                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["msg"]) {
-                                title += " (" + stopConfigs[stopNums[i]]["msg"] + ")"
+                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["message"]) {
+                                title += " (" + stopConfigs[stopNums[i]]["message"] + ")"
                             }
 
                             el.innerHTML = '<h2 id="stop-title-' + stopNums[i] + '">' + title + '</h2><div id="stop-body-' + stopNums[i] +'"></div>';
@@ -182,18 +168,14 @@
                         vehicleId = prediction.relationships.vehicle.data.id
                     }
 
-                    var shouldInclude = true
-                    if (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"]) {
-                        var filterRoutes = stopConfigs[stopNum]["filterRoutes"].split("&")
-                        if (filterRoutes.indexOf(stopNum) !== -1) {
-                            shouldInclude = false
-                        }
-                    }
-
+                    var route = prediction.relationships.route.data.id
+                    var shouldInclude = !(
+                        (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"] && (stopConfigs[stopNum]["filterRoutes"].indexOf(route) === -1))
+                        )
                     if (shouldInclude) {
                         predictions[stopNum].push({
                             'id': prediction.id,
-                            'route': prediction.relationships.route.data.id,
+                            'route': route,
                             'status': prediction.attributes.status,
                             'arrivalTime': prediction.attributes.arrival_time,
                             'departureTime': prediction.attributes.departure_time,

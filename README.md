@@ -6,8 +6,22 @@ It is thus written in the plainest, most archaic JS possible, because turns out 
 Unfortunately, the Kindle browser also just sucks, and would randomly pop an error after running smoothly for some time.
 So that didn't end up working, but it does repurpose as a mobile-first website for consolidating timings for multiple possible stops at a given location.
 
-Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop IDs, with optional minutes distance from stop in parenthesis>&key=<MBTA API KEY>`
+Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop IDs>&key=<MBTA API KEY>&config=<optional JSON config>`
 
-E.g.: `https://jo-room.github.io/mbta/?stops=191(3),70075&key=<MBTA API KEY>`
+Config options
+```json
+{
+	"string stop ID": {
+		"message": "any message to add to the title",
+		"filterRoutes": ["array of string route IDs to keep"],
+		"maxNumPredictions": 5
+	}
+}
+```
 
-<img width="471" alt="image" src="https://github.com/user-attachments/assets/6370118d-9c7e-489c-b5ed-d63738bf94e1" />
+E.g.: `https://jo-room.github.io/mbta/?stops=191,70075&key=<MBTA API KEY>config={"191":{"message":"5min","filterRoutes":["93"]},"70075":{"maxNumPredictions":5}}`
+
+<img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
+
+
+With the deviations, not sure if `JSON.parse` is Kindle browser legal.
