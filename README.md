@@ -10,4 +10,5 @@ Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop
 
 E.g.: `https://jo-room.github.io/mbta/?stops=191(3),70075&key=<MBTA API KEY>`
 
-<img width="471" alt="image" src="https://github.com/user-attachments/assets/6370118d-9c7e-489c-b5ed-d63738bf94e1" />
+<img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
+
