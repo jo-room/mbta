@@ -51,7 +51,12 @@
 
             var apiKey = getQueryVariable("key")
 
-            configureStops()
+            if (!apiKey) {
+                document.getElementById("message").innerText = "Error: Missing `key=<MBTA API key>` query parameter"
+            } else {
+                configureStops()
+            }
+
 
             function configureStops(){
                 stopNums = getQueryVariable("stops").split(",");
