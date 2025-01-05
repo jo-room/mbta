@@ -136,7 +136,7 @@
                 document.getElementById("clock").innerText = timeMessage
             
                 xhttp.onerror = function(event) {
-                    document.getElementById("message").innerText = event
+                    document.getElementById("message").innerText = "API call error: " + JSON.stringify(event)
                 }
                 xhttp.onreadystatechange = function(event) {
                     // only update if it's the most recent request to have come back
