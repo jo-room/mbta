@@ -12,9 +12,10 @@ Config options
 ```json
 {
 	"title": "Optional page title",
-	
+
 	"string stop ID": {
-		"message": "any message to add to the title",
+		"name": "replaces the default MBTA stop name",
+		"message": "any message to add in parentheses after the name",
 		"filterRoutes": ["array of string route IDs to keep"],
 		"maxNumPredictions": 5
 	},
