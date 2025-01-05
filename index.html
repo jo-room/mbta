@@ -60,6 +60,7 @@
                     stopConfigs = JSON.parse(decodeURI(getQueryVariable("config")))
                     if (stopConfigs["title"]) {
                         document.getElementById("title").innerText = stopConfigs["title"]
+                        document.title = stopConfigs["title"] + " " + document.title
                     }
                 }
 
