@@ -11,10 +11,15 @@ Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop
 Config options
 ```json
 {
+	"title": "Optional page title",
+	
 	"string stop ID": {
 		"message": "any message to add to the title",
 		"filterRoutes": ["array of string route IDs to keep"],
 		"maxNumPredictions": 5
+	},
+	"string stop ID 2": {
+		"message": "5min away",
 	}
 }
 ```
