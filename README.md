@@ -6,7 +6,7 @@ It is thus written in the plainest, most archaic JS possible, because turns out 
 Unfortunately, the Kindle browser also just sucks, and would randomly pop an error after running smoothly for some time.
 So that didn't end up working, but it does repurpose as a mobile-first website for consolidating timings for multiple possible stops at a given location.
 
-Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop IDs>&key=<MBTA API KEY>&config=<optional JSON config>`
+Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop IDs>&config=<optional JSON config>`
 
 Config options
 ```json
@@ -25,7 +25,9 @@ Config options
 }
 ```
 
-E.g.: `https://jo-room.github.io/mbta/?stops=191,70075&key=<MBTA API KEY>&config={"191":{"message":"5min walking","filterRoutes":["93"]},"70075":{"maxNumPredictions":5}}`
+E.g.: `https://jo-room.github.io/mbta/?stops=191,70075&config={"191":{"message":"5min walking","filterRoutes":["93"]},"70075":{"maxNumPredictions":5}}`
+
+`key=<MBTA API KEY>` is an optional query param, but the API allows 20 requests/min without a key. We are under that threshold at max 2 requests/min (1 initial set up request, then 1 prediction request/min).
 
 <img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
 

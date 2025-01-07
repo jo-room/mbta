@@ -51,12 +51,7 @@
 
             var apiKey = getQueryVariable("key")
 
-            if (!apiKey) {
-                document.getElementById("message").innerText = "Error: Missing `key=<MBTA API key>` query parameter"
-            } else {
-                configureStops()
-            }
-
+            configureStops()
 
             function configureStops(){
                 stopNums = getQueryVariable("stops").split(",");
@@ -109,7 +104,9 @@
                 };
                 pollIntervalID = setInterval(callAPIs, pollingInterval);
                 xhttp.open("GET", "https://api-v3.mbta.com/stops" + "?filter[id]=" + stopNums.join(",") + "&fields[stop]=name,description", true);
-                xhttp.setRequestHeader('x-api-key', apiKey)
+                if (apiKey) {
+                    xhttp.setRequestHeader('x-api-key', apiKey)
+                }
                 xhttp.send();
             }
 
@@ -152,7 +149,9 @@
                     }
                 };
                 xhttp.open("GET", "https://api-v3.mbta.com/predictions/?filter[stop]=" + stopNums.join(",") + "&sort=arrival_time", true);
-                xhttp.setRequestHeader('x-api-key', apiKey)
+                if (apiKey) {
+                    xhttp.setRequestHeader('x-api-key', apiKey)
+                }
                 xhttp.send();
             }
 
