@@ -24,10 +24,13 @@
         /*#clock {
             font-size: 1em;
         }*/
+        #configInput {
+            margin: 10px 0;
+        }
     </style>
     <body>
         <h1 id="title"></h1>
-        <div>
+        <div id="subtitle">
             <span id="clock"></span>
             <span>Polls every minute</span>
         </div>
@@ -50,11 +53,24 @@
             var predictionData;
 
             var apiKey = getQueryVariable("key")
+            var stopsQueryParam = getQueryVariable("stops")
 
-            configureStops()
+            if (stopsQueryParam) {
+                configureStops()
+            } else {
+                document.getElementById("subtitle").innerText = "Encode a stop config"
+                var el = document.createElement('div');
+                el.innerHTML = '<textarea id="configInput" name="config" onKeyUp="encodeAndUpdate()" cols="50" rows="3" />'
+                document.getElementById("message").appendChild(el)
+            }
+
+            function encodeAndUpdate() {
+                var config = document.getElementById('configInput').value
+                document.getElementById("content").innerText = encodeURI(config)
+            }
 
             function configureStops(){
-                stopNums = getQueryVariable("stops").split(",");
+                stopNums = stopsQueryParam.split(",");
 
                 if (getQueryVariable("config")) {
                     stopConfigs = JSON.parse(decodeURI(getQueryVariable("config")))
