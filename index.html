@@ -8,7 +8,6 @@
         body {
             font-family: Arial;
             padding: 10px;
-/*            font-size: 2em;*/
         }
         h1 {
             font-size: 1.5em;
@@ -18,15 +17,55 @@
             font-size: 1em;
             margin-block-end: 0;
         }
+        label {
+            display: block;
+            margin-top: 5px;
+        }
+        textarea {
+          width:100%;
+          margin: 5px 0;
+          padding: 5px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        input[type="text"] {
+          width:100%;
+          margin: 5px 0;
+          padding: 5px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        input[type="submit"] {
+          margin: 5px 0;
+          padding: 5px;
+        }
+        pre {
+          white-space: pre-wrap;
+          font-size: 0.8em;
+        }
+        .formInput {
+            /*padding-top: 10px;
+            margin: 0 10px;*/
+        }
+        .errorMessage {
+            color: red;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
         #content {
             font-size: 1.2em;
+        }
+        #urlOutput {
+            padding: 10px 0;
         }
         /*#clock {
             font-size: 1em;
         }*/
-        #configInput {
+        /*#configInput {
             margin: 10px 0;
-        }
+        }*/
     </style>
     <body>
         <h1 id="title"></h1>
@@ -58,15 +97,86 @@
             if (stopsQueryParam) {
                 configureStops()
             } else {
-                document.getElementById("subtitle").innerText = "Encode a stop config"
+                document.getElementById("title").innerText = "Generate URL"
+                document.getElementById("subtitle").innerText = ""
                 var el = document.createElement('div');
-                el.innerHTML = '<textarea id="configInput" name="config" onKeyUp="encodeAndUpdate()" cols="40" rows="3" />'
-                document.getElementById("message").appendChild(el)
+                el.innerHTML = `<form id="urlForm">
+                  <div class="formInput">
+                    <label for="stopIds">Stop ID(s), separated by commas:</label>
+                    <input type="text" id="stopIdsInput" name="stopIds" />
+                  </div>
+                  <div class="errorMessage" id="stopIdsErrorMessage"></div>
+                  <div class="formInput">
+                    <label for="config">Optional configuration (must be valid JSON):</label>
+                    <textarea id="configInput" name="config" cols="40" rows="3" ></textarea>
+                  </div>
+                  <div class="errorMessage" id="configInputErrorMessage"></div>
+                  <div class="formInput">
+                    <input type="submit" value="Generate URL" />
+                  </div>
+                </form>
+                <div id="urlOutput"></div>
+                <div>
+                Example configuration for stop IDs 178,70075. All fields are optional.
+                <pre>
+{
+    "title": "Example Title",
+    "178": {
+        "name": "Near Copley Square",
+        "message": "5min away",
+        "filterRoutes": ["39", "9"],
+        "maxNumPredictions": 10
+    },
+    "70075": {
+        "maxNumPredictions": 5
+    }
+}</pre>
+                </div>
+                `
+                document.getElementById("content").appendChild(el)
+                document.getElementById("urlForm").addEventListener("submit", encodeAndUpdate);
             }
 
-            function encodeAndUpdate() {
+            function isJsonString(str) {
+                try {
+                    JSON.parse(str);
+                } catch (e) {
+                    return false;
+                }
+                return true;
+            }
+
+            function encodeAndUpdate(e) {
+                e.preventDefault()
+                var errorFound = false
+                var stopIds = document.getElementById('stopIdsInput').value.trim()
+                if (stopIds === "") {
+                    document.getElementById("stopIdsErrorMessage").innerText = "Stop ID(s) is required."
+                    errorFound = true
+                } else {
+                    document.getElementById("stopIdsErrorMessage").innerText = ""
+                }
+                var trimmedStopIds = []
+                var splitStopIds = stopIds.split(",")
+                for (var i = 0; i < splitStopIds.length; i++) {
+                    trimmedStopIds.push(splitStopIds[i].trim())
+                }
+                var url = "https://jo-room.github.io/mbta/?stops=" + trimmedStopIds.join(",")
+
                 var config = document.getElementById('configInput').value
-                document.getElementById("content").innerText = encodeURI(config)
+                if (config) {
+                    try {
+                        JSON.parse(config);
+                    } catch (e) {
+                        document.getElementById("configInputErrorMessage").innerText = "Invalid JSON." + e.toString()
+                        return
+                    }
+                    document.getElementById("configInputErrorMessage").innerText = ""
+                    var minified = JSON.stringify(JSON.parse(config));
+                    url += "&config=" + encodeURI(minified)
+                }
+                if (errorFound) return
+                document.getElementById("urlOutput").innerHTML = '<a href="' + url + '">' + url + '</a>'
             }
 
             function configureStops(){
@@ -161,6 +271,7 @@
                     if (xhttp.readyState == XMLHttpRequest.DONE && latestReturnedPollNum < currentPollNum) {
                         latestReturnedPollNum = currentPollNum;
                         predictionData = JSON.parse(xhttp.response).data
+                        document.getElementById("message").innerText = ""
                         updateUI()
                     }
                 };
