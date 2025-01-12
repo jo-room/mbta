@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Find MBTA Stop ID</title>
+    </head>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            padding: 10px;
+        }
+        h1 {
+            font-size: 1.5em;
+            margin-block: 0;
+        }
+        input[type="text"] {
+          width:100%;
+          margin: 10px 0;
+          padding: 5px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        #output {
+            line-height: 1.5em;
+        }
+    </style>
+    <body>
+        <h1 id="title">Search for MBTA stop ID</h1>
+        <div id="content">Loading...</div>
+        <script type="text/javascript">
+            let searchableStops = []
+            const response = fetch("https://api-v3.mbta.com/stops?fields[stop]=id,name,description&filter[location_type]=0").then(response=>response.json()).then(data => {
+                searchableStops = data.data.map(stop => {
+                    return {
+                        "name": stop.attributes.name,
+                        "lowerCaseName": stop.attributes.name.toLowerCase(),
+                        "description": stop.attributes.description,
+                        "id": stop.id
+                    }
+                })
+                // .filter(stop => !stop.id.startsWith("node-") && !stop.id.startsWith("door-"))
+                document.getElementById("content").innerHTML ='<input type="text" id="stopIdSearch" name="stopIdSearch" onKeyUp="filterStops()"></input><div id="output"></div>'
+
+            })
+
+            function filterStops() {
+                let searchTerm = document.getElementById('stopIdSearch').value.trim().toLowerCase()
+                let output = searchableStops.filter(stop => stop.lowerCaseName.includes(searchTerm)).sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })).map(stop => {
+                    let stopText = `${stop.id}: ${stop.name}`
+                    if (stop.description) {
+                        stopText += ` (${stop.description})`
+                    }
+                    return stopText
+                })
+
+                document.getElementById("output").innerText = output.join("\n")
+            }
+
+        </script>
+    </body>
+</html>

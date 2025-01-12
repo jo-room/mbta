@@ -117,7 +117,7 @@
                 </form>
                 <div id="urlOutput"></div>
                 <div>
-                Example configuration for stop IDs 178,70075. All fields are optional.
+                Example configuration for stop IDs 178,70154. All fields are optional.
                 <pre>
 {
     "title": "Example Title",
@@ -127,11 +127,12 @@
         "filterRoutes": ["39", "9"],
         "maxNumPredictions": 10
     },
-    "70075": {
+    "70154": {
         "maxNumPredictions": 5
     }
 }</pre>
                 </div>
+                <div>Most bus stop IDs can be found on Google Maps. If not, I tried making a search <a href="https://jo-room.github.io/mbta/stops/">here</a></div>
                 `
                 document.getElementById("content").appendChild(el)
                 document.getElementById("urlForm").addEventListener("submit", encodeAndUpdate);
