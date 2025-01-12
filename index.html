@@ -43,7 +43,6 @@
         }
         pre {
           white-space: pre-wrap;
-          font-size: 0.8em;
         }
         .formInput {
             /*padding-top: 10px;
@@ -59,6 +58,9 @@
         }
         #urlOutput {
             padding: 10px 0;
+        }
+        #info {
+            font-size: 0.8em;
         }
         /*#clock {
             font-size: 1em;
@@ -116,8 +118,9 @@
                   </div>
                 </form>
                 <div id="urlOutput"></div>
-                <div>
-                Example configuration for stop IDs 178,70154. All fields are optional.
+                <div id="info">
+                <p>Most bus stop IDs can be found on Google Maps. For others, I tried making a search <a href="https://jo-room.github.io/mbta/stops.html">here</a>.</p>
+                <p>Example configuration (all fields optional) for stop IDs 178,70154:</p>
                 <pre>
 {
     "title": "Example Title",
@@ -132,7 +135,6 @@
     }
 }</pre>
                 </div>
-                <div>Most bus stop IDs can be found on Google Maps. If not, I tried making a search <a href="https://jo-room.github.io/mbta/stops/">here</a></div>
                 `
                 document.getElementById("content").appendChild(el)
                 document.getElementById("urlForm").addEventListener("submit", encodeAndUpdate);

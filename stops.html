@@ -46,15 +46,18 @@
 
             function filterStops() {
                 let searchTerm = document.getElementById('stopIdSearch').value.trim().toLowerCase()
-                let output = searchableStops.filter(stop => stop.lowerCaseName.includes(searchTerm)).sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })).map(stop => {
-                    let stopText = `${stop.id}: ${stop.name}`
-                    if (stop.description) {
-                        stopText += ` (${stop.description})`
-                    }
-                    return stopText
-                })
-
-                document.getElementById("output").innerText = output.join("\n")
+                if (searchTerm.length > 0) {
+                    let output = searchableStops.filter(stop => stop.lowerCaseName.includes(searchTerm)).sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })).map(stop => {
+                        let stopText = `${stop.id}: ${stop.name}`
+                        if (stop.description) {
+                            stopText += ` (${stop.description})`
+                        }
+                        return stopText
+                    })
+                    document.getElementById("output").innerText = output.join("\n")
+                } else {
+                    document.getElementById("output").innerText = ""
+                }
             }
 
         </script>
