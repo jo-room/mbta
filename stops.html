@@ -15,18 +15,22 @@
         }
         input[type="text"] {
           width:100%;
-          margin: 10px 0;
+          margin: 5px 0;
           padding: 5px;
           -webkit-box-sizing: border-box;
           -moz-box-sizing: border-box;
           box-sizing: border-box;
         }
+        #content {
+            margin: 10px 0;
+        }
         #output {
-            line-height: 1.5em;
+          margin: 5px 0;
+          line-height: 1.5em;
         }
     </style>
     <body>
-        <h1 id="title">Search for MBTA stop ID</h1>
+        <h1 id="title">Find MBTA stop ID</h1>
         <div id="content">Loading...</div>
         <script type="text/javascript">
             let searchableStops = []
@@ -40,7 +44,7 @@
                     }
                 })
                 // .filter(stop => !stop.id.startsWith("node-") && !stop.id.startsWith("door-"))
-                document.getElementById("content").innerHTML ='<input type="text" id="stopIdSearch" name="stopIdSearch" onKeyUp="filterStops()"></input><div id="output"></div>'
+                document.getElementById("content").innerHTML ='<label for="stopIdSearch">Search by stop name:</label><input type="text" id="stopIdSearch" name="stopIdSearch" onKeyUp="filterStops()"></input><div id="output"></div>'
 
             })
 
