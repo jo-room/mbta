@@ -1,14 +1,14 @@
 # MBTA Timings
 
-This started out as an attempt to create an bus timings web page that runs on a Kindle experimental browser, to have as an in-home bus sign on my kitchen door.
+[https://jo-room.github.io/mbta](https://jo-room.github.io/mbta).
+
+<img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
+
+This started out as an attempt to create an bus timings web page that runs on a Kindle experimental browser, to have as an in-home bus sign on my fridge door.
 It is thus written in the plainest, most archaic JS possible, because turns out if Chrome v1 doesn't support it the Kindle browser doesn't either.
 
-Unfortunately, the Kindle browser also just sucks, and would randomly pop a non-browser error after running smoothly for some time.
+Unfortunately, the Kindle browser also just sucks, and would randomly pop a non-browser error after running smoothly for some random amount of time.
 So that didn't end up working, but it does repurpose as a mobile-first website for consolidating timings for multiple possible stops at a given location.
-
-Usage: `https://jo-room.github.io/mbta/?stops=<comma-delimited list of MBTA stop IDs>&config=<optional JSON config, URI encoded>`
-
-Use [https://jo-room.github.io/mbta/](https://jo-room.github.io/mbta/) to compose the URL.
 
 Config options
 ```json
@@ -27,15 +27,8 @@ Config options
 }
 ```
 
-E.g.: [?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D](?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D)
+E.g.: [https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D](https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D)
 
 `key=<MBTA API KEY>` is an optional query param, but the API allows 20 requests/min without a key. We are under that threshold at max 2 requests/min (1 initial set up request, then 1 prediction request/min).
 
-<img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
-
-
 With the deviations, the following might not be Kindle browser legal: `JSON.parse`, `String.prototype.trim()`, \``\` to denote multi-line strings.
-
-## Privacy
-
-Your web browser directly makes the request to the MBTA. These are static pages hosted via GitHub Pages, there is no server hosted by me, and I'm not doing any logging. So to say, there is no way for me to know your visits, stops, or configurations, or however else you use this website.
