@@ -18,6 +18,7 @@ Config options
 		"name": "replaces the default MBTA stop name",
 		"message": "any message to add in parentheses after the name",
 		"filterRoutes": ["array of string route IDs to keep"],
+		"minMinutesAway": 5,
 		"maxNumPredictions": 5
 	},
 	"stop ID 2": {
@@ -26,7 +27,7 @@ Config options
 }
 ```
 
-E.g.: [https://jo-room.github.io/mbta/?stops=191,70075&config=%7B%22191%22:%7B%22message%22:%225min%20walking%22,%22filterRoutes%22:%5B%2293%22%5D%7D,%2270075%22:%7B%22maxNumPredictions%22:5%7D%7D](https://jo-room.github.io/mbta/?stops=191,70075&config=%7B%22191%22:%7B%22message%22:%225min%20walking%22,%22filterRoutes%22:%5B%2293%22%5D%7D,%2270075%22:%7B%22maxNumPredictions%22:5%7D%7D)
+E.g.: [https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:5,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D](https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:5,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D)
 
 `key=<MBTA API KEY>` is an optional query param, but the API allows 20 requests/min without a key. We are under that threshold at max 2 requests/min (1 initial set up request, then 1 prediction request/min).
 

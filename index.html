@@ -75,7 +75,7 @@
                         document.title = stopConfigs["title"] + " " + document.title
                     }
                 }
-                document.getElementById("info").innerHTML = '<p>Configure stop(s) <a href="https://jo-room.github.io/mbta/configure.html' + window.location.search + '">here</a>.'
+                document.getElementById("info").innerHTML = '<p>Configure stop(s) <a href="configure.html' + window.location.search + '">here</a>.'
 
                 getAndSetStops()
             }
@@ -182,6 +182,7 @@
                     predictions[stopNums[i]] = []
                 }
 
+                var now = Date.now()
                 for (var i = 0; i < predictionData.length; i++) {
                     var prediction = predictionData[i]
                     var stopNum = prediction.relationships.stop.data.id
@@ -195,39 +196,44 @@
                         vehicleId = prediction.relationships.vehicle.data.id
                     }
 
+                    var predictedTime
+                    if (!prediction.attributes.arrival_time){
+                        predictedTime = new Date(prediction.attributes.departure_time)
+                    } else {
+                        predictedTime = new Date(prediction.attributes.arrival_time)       
+                    }
+
                     var route = prediction.relationships.route.data.id
                     var shouldInclude = !(
                         (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"] && (stopConfigs[stopNum]["filterRoutes"].indexOf(route) === -1))
                          || prediction.attributes.schedule_relationship === "CANCELLED")
+
+                    if (shouldInclude && stopConfigs[stopNum] && stopConfigs[stopNum]["minMinutesAway"]) {
+                        var minLeft = Math.round((predictedTime - now) / msPerMin)
+                        if (minLeft < stopConfigs[stopNum]["minMinutesAway"]) {
+                            shouldInclude = false
+                        }
+                    }
+
                     if (shouldInclude) {
                         predictions[stopNum].push({
                             'id': prediction.id,
                             'route': route,
                             'status': prediction.attributes.status,
-                            'arrivalTime': prediction.attributes.arrival_time,
-                            'departureTime': prediction.attributes.departure_time,
+                            'predictedTime': predictedTime,
                             'arrivalUncertainty': prediction.attributes.arrival_uncertainty,
                             'vehicleId': vehicleId,
                         })
                     }
                 }
 
-                var now = Date.now()
                 for (var i = 0; i < stopNums.length; i++) {
                     var newStopEl = document.createElement('div');
                     newStopEl.setAttribute('id', "stop-body-"+ stopNums[i])
 
                     // sort by arrival/departure time
                     predictions[stopNums[i]].sort(function(a, b) {
-                        var aSortTime = a.arrivalTime
-                        if (!aSortTime) {
-                            aSortTime = a.departureTime
-                        }
-                        var bSortTime = b.arrivalTime
-                        if (!bSortTime) {
-                            bSortTime = b.departureTime
-                        }
-                        return aSortTime.localeCompare(bSortTime);
+                        return a.predictedTime - b.predictedTime;
                     });
 
                     for (var j = 0; j < predictions[stopNums[i]].length; j++) {
@@ -261,13 +267,8 @@
                 }
             }
 
-            function formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId){
-                var predictedTime
-                if (!prediction.arrivalTime){
-                    predictedTime = new Date(prediction.departureTime)
-                } else {
-                    predictedTime = new Date(prediction.arrivalTime)       
-                }
+            function formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId){ 
+                var predictedTime = prediction.predictedTime
                 var minLeft = Math.round((predictedTime - now) / msPerMin)
                 
                 var timeMessage = "";
