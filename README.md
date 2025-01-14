@@ -1,10 +1,10 @@
 # MBTA Timings
 
-[https://jo-room.github.io/mbta](https://jo-room.github.io/mbta).
+[https://jo-room.github.io/mbta](https://jo-room.github.io/mbta)
 
 <img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
 
-This started out as an attempt to create an bus timings web page that runs on a Kindle experimental browser, to have as an in-home bus sign on my fridge door.
+This started out as an attempt to create a bus timings page that runs on a Kindle experimental browser, to have as an in-home bus sign on my fridge door.
 It is thus written in the plainest, most archaic JS possible, because turns out if Chrome v1 doesn't support it the Kindle browser doesn't either.
 
 Unfortunately, the Kindle browser also just sucks, and would randomly pop a non-browser error after running smoothly for some random amount of time.
