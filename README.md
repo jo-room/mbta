@@ -34,4 +34,8 @@ E.g.: [?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Squ
 <img width="457" alt="image" src="https://github.com/user-attachments/assets/c76b7a31-0f1e-4982-8971-a95ae5f64ed5" />
 
 
-With the deviations, the following might not be Kindle browser legal: `JSON.parse`, `String.prototype.trim()`, ``` to denote multi-line strings.
+With the deviations, the following might not be Kindle browser legal: `JSON.parse`, `String.prototype.trim()`, \``\` to denote multi-line strings.
+
+## Privacy
+
+Your web browser directly makes the request to the MBTA. These are static pages hosted via GitHub Pages, there is no server hosted by me, and I'm not doing any logging. So to say, there is no way for me to know your visits, stops, or configurations, or however else you use this website.
