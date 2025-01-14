@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Configure MBTA Stops</title>
+    </head>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            padding: 10px;
+        }
+        h1 {
+            font-size: 1.5em;
+            margin-block: 0;
+        }
+        label {
+            display: block;
+            margin-top: 5px;
+        }
+        textarea {
+          width:100%;
+          margin: 5px 0;
+          padding: 5px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        input[type="text"] {
+          width:100%;
+          margin: 5px 0;
+          padding: 5px;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+        input[type="submit"] {
+          margin: 5px 0;
+          padding: 5px;
+        }
+        pre {
+          white-space: pre-wrap;
+        }
+        .formInput {
+            /*padding-top: 10px;
+            margin: 0 10px;*/
+        }
+        .errorMessage {
+            color: red;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+        #urlOutput {
+            padding: 10px 0;
+        }
+        #info {
+            font-size: 0.8em;
+        }
+    </style>
+    <body>
+        <h1 id="title">Configure MBTA stops</h1>
+        <div id="content">
+            <form id="urlForm">
+                  <div class="formInput">
+                    <label for="stopIds">Stop ID(s), separated by commas:</label>
+                    <input type="text" id="stopIdsInput" name="stopIds" />
+                  </div>
+                  <div class="errorMessage" id="stopIdsErrorMessage"></div>
+                  <div class="formInput">
+                    <label for="config">Optional configuration (must be valid JSON):</label>
+                    <textarea id="configInput" name="config" cols="40" rows="10" ></textarea>
+                  </div>
+                  <div class="errorMessage" id="configInputErrorMessage"></div>
+                  <div class="formInput">
+                    <input type="submit" value="Generate URL" />
+                  </div>
+            </form>
+            <div id="urlOutput"></div>
+            <div id="info">
+            <p>Most bus stop IDs can be found on the Google Maps website (not the app). For others, I tried making a search <a href="https://jo-room.github.io/mbta/stops.html">here</a>.</p>
+            <p>Example configuration (all fields optional) for stop IDs 178,70154:</p>
+            <pre>
+{
+    "title": "Example Title",
+    "178": {
+        "name": "Near Copley Square",
+        "message": "5min away",
+        "filterRoutes": ["39", "9"],
+        "maxNumPredictions": 10
+    },
+    "70154": {
+        "maxNumPredictions": 5
+    }
+}</pre>
+        </div>
+        <script type="text/javascript">
+            document.getElementById("urlForm").addEventListener("submit", encodeAndUpdate);
+
+            let stopsQueryParam = getQueryVariable("stops")
+            if (stopsQueryParam) {
+                document.getElementById("stopIdsInput").value = stopsQueryParam
+            }
+
+            if (getQueryVariable("config")) {
+                stopConfigs = JSON.parse(decodeURI(getQueryVariable("config")))
+                document.getElementById("configInput").value = JSON.stringify(stopConfigs, null, 4)
+            }
+
+            function isJsonString(str) {
+                try {
+                    JSON.parse(str);
+                } catch (e) {
+                    return false;
+                }
+                return true;
+            }
+
+            function encodeAndUpdate(e) {
+                e.preventDefault()
+                var errorFound = false
+                var stopIds = document.getElementById('stopIdsInput').value.trim()
+                if (stopIds === "") {
+                    document.getElementById("stopIdsErrorMessage").innerText = "Stop ID is required."
+                    errorFound = true
+                } else {
+                    document.getElementById("stopIdsErrorMessage").innerText = ""
+                }
+                var trimmedStopIds = []
+                var splitStopIds = stopIds.split(",")
+                for (var i = 0; i < splitStopIds.length; i++) {
+                    trimmedStopIds.push(splitStopIds[i].trim())
+                }
+                var url = "https://jo-room.github.io/mbta/?stops=" + trimmedStopIds.join(",")
+
+                var config = document.getElementById('configInput').value
+                if (config) {
+                    try {
+                        JSON.parse(config);
+                    } catch (e) {
+                        document.getElementById("configInputErrorMessage").innerText = "Invalid JSON." + e.toString()
+                        return
+                    }
+                    document.getElementById("configInputErrorMessage").innerText = ""
+                    var minified = JSON.stringify(JSON.parse(config));
+                    url += "&config=" + encodeURI(minified)
+                }
+                if (errorFound) return
+                document.getElementById("urlOutput").innerHTML = '<a href="' + url + '">' + url + '</a>'
+            }
+
+            function getQueryVariable(variable) {
+               var query = window.location.search.substring(1);
+               var vars = query.split("&");
+               for (var i=0;i<vars.length;i++) {
+                   var pair = vars[i].split("=");
+                   if(pair[0] == variable){return pair[1];}
+               }
+               return(false);
+           }
+        </script>
+    </body>
+</html>

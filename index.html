@@ -17,50 +17,12 @@
             font-size: 1em;
             margin-block-end: 0;
         }
-        label {
-            display: block;
-            margin-top: 5px;
-        }
-        textarea {
-          width:100%;
-          margin: 5px 0;
-          padding: 5px;
-          -webkit-box-sizing: border-box;
-          -moz-box-sizing: border-box;
-          box-sizing: border-box;
-        }
-        input[type="text"] {
-          width:100%;
-          margin: 5px 0;
-          padding: 5px;
-          -webkit-box-sizing: border-box;
-          -moz-box-sizing: border-box;
-          box-sizing: border-box;
-        }
-        input[type="submit"] {
-          margin: 5px 0;
-          padding: 5px;
-        }
-        pre {
-          white-space: pre-wrap;
-        }
-        .formInput {
-            /*padding-top: 10px;
-            margin: 0 10px;*/
-        }
-        .errorMessage {
-            color: red;
-            font-size: 0.8em;
-            margin-bottom: 5px;
-        }
+
         #content {
             font-size: 1.2em;
         }
-        #urlOutput {
-            padding: 10px 0;
-        }
         #info {
-            font-size: 0.8em;
+            margin-top: 20px;
         }
         /*#clock {
             font-size: 1em;
@@ -77,6 +39,7 @@
         </div>
         <div id="message"></div>
         <div id="content"></div>
+        <div id="info"></div>
         <script type="text/javascript">
             var stopNums
             var stopConfigs = {}
@@ -99,87 +62,7 @@
             if (stopsQueryParam) {
                 configureStops()
             } else {
-                document.getElementById("title").innerText = "Generate URL"
-                document.getElementById("subtitle").innerText = ""
-                var el = document.createElement('div');
-                el.innerHTML = `<form id="urlForm">
-                  <div class="formInput">
-                    <label for="stopIds">Stop ID(s), separated by commas:</label>
-                    <input type="text" id="stopIdsInput" name="stopIds" />
-                  </div>
-                  <div class="errorMessage" id="stopIdsErrorMessage"></div>
-                  <div class="formInput">
-                    <label for="config">Optional configuration (must be valid JSON):</label>
-                    <textarea id="configInput" name="config" cols="40" rows="3" ></textarea>
-                  </div>
-                  <div class="errorMessage" id="configInputErrorMessage"></div>
-                  <div class="formInput">
-                    <input type="submit" value="Generate URL" />
-                  </div>
-                </form>
-                <div id="urlOutput"></div>
-                <div id="info">
-                <p>Most bus stop IDs can be found on Google Maps. For others, I tried making a search <a href="https://jo-room.github.io/mbta/stops.html">here</a>.</p>
-                <p>Example configuration (all fields optional) for stop IDs 178,70154:</p>
-                <pre>
-{
-    "title": "Example Title",
-    "178": {
-        "name": "Near Copley Square",
-        "message": "5min away",
-        "filterRoutes": ["39", "9"],
-        "maxNumPredictions": 10
-    },
-    "70154": {
-        "maxNumPredictions": 5
-    }
-}</pre>
-                </div>
-                `
-                document.getElementById("content").appendChild(el)
-                document.getElementById("urlForm").addEventListener("submit", encodeAndUpdate);
-            }
-
-            function isJsonString(str) {
-                try {
-                    JSON.parse(str);
-                } catch (e) {
-                    return false;
-                }
-                return true;
-            }
-
-            function encodeAndUpdate(e) {
-                e.preventDefault()
-                var errorFound = false
-                var stopIds = document.getElementById('stopIdsInput').value.trim()
-                if (stopIds === "") {
-                    document.getElementById("stopIdsErrorMessage").innerText = "Stop ID is required."
-                    errorFound = true
-                } else {
-                    document.getElementById("stopIdsErrorMessage").innerText = ""
-                }
-                var trimmedStopIds = []
-                var splitStopIds = stopIds.split(",")
-                for (var i = 0; i < splitStopIds.length; i++) {
-                    trimmedStopIds.push(splitStopIds[i].trim())
-                }
-                var url = "https://jo-room.github.io/mbta/?stops=" + trimmedStopIds.join(",")
-
-                var config = document.getElementById('configInput').value
-                if (config) {
-                    try {
-                        JSON.parse(config);
-                    } catch (e) {
-                        document.getElementById("configInputErrorMessage").innerText = "Invalid JSON." + e.toString()
-                        return
-                    }
-                    document.getElementById("configInputErrorMessage").innerText = ""
-                    var minified = JSON.stringify(JSON.parse(config));
-                    url += "&config=" + encodeURI(minified)
-                }
-                if (errorFound) return
-                document.getElementById("urlOutput").innerHTML = '<a href="' + url + '">' + url + '</a>'
+                document.getElementById("subtitle").innerHTML = '<p>No stops specified. Please <a href="https://jo-room.github.io/mbta/configure.html">configure stops</a>.</p><p>Or for a demo, see <a href="https://jo-room.github.io/mbta/?stops=191,70075">https://jo-room.github.io/mbta/?stops=191,70075</a>.</p>'
             }
 
             function configureStops(){
@@ -192,6 +75,7 @@
                         document.title = stopConfigs["title"] + " " + document.title
                     }
                 }
+                document.getElementById("info").innerHTML = '<p>Configure stop(s) <a href="https://jo-room.github.io/mbta/configure.html' + window.location.search + '">here</a>.'
 
                 getAndSetStops()
             }
