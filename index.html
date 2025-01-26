@@ -38,6 +38,7 @@
             <span>Polls every minute</span>
         </div>
         <div id="message"></div>
+        <div id="persistentMessage"></div>
         <div id="content"></div>
         <div id="info"></div>
         <script type="text/javascript">
@@ -182,10 +183,24 @@
                     predictions[stopNums[i]] = []
                 }
 
+                var routeDirections = {}
+
                 var now = Date.now()
                 for (var i = 0; i < predictionData.length; i++) {
                     var prediction = predictionData[i]
                     var stopNum = prediction.relationships.stop.data.id
+                    var route = prediction.relationships.route.data.id
+
+                    if (prediction.attributes.departure_time) { // if not final stop
+                        if (routeDirections[route]) {
+                            if (routeDirections[route] != prediction.attributes.direction_id) {
+                                document.getElementById("persistentMessage").innerText = "Warning: unexpected multiple directions detected for route " + route + ". This is probably a stop that services multiple directions in the middle of a route. Please talk to me about this so I can consider adding in the direction. In the meantime, please use the MBTA website because these predictions don't distinguish which direction."
+                            }
+                        } else {
+                            routeDirections[route] = prediction.attributes.direction_id
+                        }
+                    }
+
 
                     if (stopConfigs[stopNum] && stopConfigs[stopNum]["maxNumPredictions"] && predictions[stopNum].length >= stopConfigs[stopNum]["maxNumPredictions"]) {
                         continue;
@@ -203,8 +218,8 @@
                         predictedTime = new Date(prediction.attributes.arrival_time)       
                     }
 
-                    var route = prediction.relationships.route.data.id
-                    var shouldInclude = !(
+                    // departure_time: When the vehicle is now predicted to depart. null if the last stop (*/relationships/stop/data/id) on the trip
+                    var shouldInclude = prediction.attributes.departure_time !== null && !(
                         (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"] && (stopConfigs[stopNum]["filterRoutes"].indexOf(route) === -1))
                          || prediction.attributes.schedule_relationship === "CANCELLED")
 
@@ -283,7 +298,9 @@
                     if (minutes < 10) {
                         minutes = "0" + minutes
                     }
-                    if (hours < 12){
+                    if (hours == 0) {
+                        timeMessage = 12 + "." + minutes + " am"
+                    } else if (hours < 12) {
                         timeMessage = hours + "." + minutes + " am"
                     } else if (hours == 12) {
                         timeMessage = hours + "." + minutes + " pm"
