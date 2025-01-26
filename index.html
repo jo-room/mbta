@@ -179,11 +179,11 @@
 
             function updatePredictions(){
                 var predictions = {}
+                var stopRouteDirections = {}
                 for (var i = 0; i < stopNums.length; i++) {
                     predictions[stopNums[i]] = []
+                    stopRouteDirections[stopNums[i]] = {}
                 }
-
-                var routeDirections = {}
 
                 var now = Date.now()
                 for (var i = 0; i < predictionData.length; i++) {
@@ -192,12 +192,12 @@
                     var route = prediction.relationships.route.data.id
 
                     if (prediction.attributes.departure_time) { // if not final stop
-                        if (routeDirections[route]) {
-                            if (routeDirections[route] != prediction.attributes.direction_id) {
+                        if (stopRouteDirections[stopNum][route]) {
+                            if (stopRouteDirections[stopNum][route] != prediction.attributes.direction_id) {
                                 document.getElementById("persistentMessage").innerText = "Warning: unexpected multiple directions detected for route " + route + ". This is probably a stop that services multiple directions in the middle of a route. Please talk to me about this so I can consider adding in the direction. In the meantime, please use the MBTA website because these predictions don't distinguish which direction."
                             }
                         } else {
-                            routeDirections[route] = prediction.attributes.direction_id
+                            stopRouteDirections[stopNum][route] = prediction.attributes.direction_id
                         }
                     }
 
