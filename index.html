@@ -258,19 +258,12 @@
                             showNegative = true;
                         }
 
-                        var routeName;
-                        if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["routeName"]) {
-                            routeName = stopConfigs[stopNums[i]]["routeName"]
-                        } else {
-                            routeName = prediction.route
-                        }
-
                         var showVehicleId = false;
                         if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["showVehicleId"]) {
                             showVehicleId = true;
                         }
 
-                        var predictionMessage = formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId)
+                        var predictionMessage = formatPredictionMessage(now, prediction, showNegative, showVehicleId)
 
                         if (predictionMessage) {
                             var predictionEl = document.createElement('div');
@@ -282,7 +275,7 @@
                 }
             }
 
-            function formatPredictionMessage(now, prediction, showNegative, routeName, showVehicleId){ 
+            function formatPredictionMessage(now, prediction, showNegative, showVehicleId){ 
                 var predictedTime = prediction.predictedTime
                 var minLeft = Math.round((predictedTime - now) / msPerMin)
                 
@@ -309,7 +302,7 @@
                     }
                 }
 
-                var predictionMessage = routeName + ": " + timeMessage
+                var predictionMessage = prediction.route + ": " + timeMessage
 
                 if (prediction.status){
                     predictionMessage += " - " + prediction.status
