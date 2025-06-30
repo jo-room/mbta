@@ -97,13 +97,22 @@
                             var el = document.createElement('div');
                             el.setAttribute('id', "stop-"+ stopNums[i])
                             var title;
+                            var originalTitle;
+
+                            if (stopData.attributes.description){
+                                originalTitle = stopData.attributes.description
+                            } else {
+                               originalTitle = stopData.attributes.name
+                            }
+
                             if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["name"]) {
                                 title = stopConfigs[stopNums[i]]["name"]
-                            }
-                            else if (stopData.attributes.description){
-                                title = stopData.attributes.description
                             } else {
-                               title = stopData.attributes.name
+                               title = originalTitle
+                            }
+
+                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["estimateLastDepartedFromMinsAway"]) {
+                                title += " (how far from " + stopConfigs[stopNums[i]]["estimateLastDepartedFromMinsAway"] + "min away from " + originalTitle + ")"
                             }
 
                             if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["message"]) {
@@ -246,10 +255,17 @@
                     var newStopEl = document.createElement('div');
                     newStopEl.setAttribute('id', "stop-body-"+ stopNums[i])
 
-                    // sort by arrival/departure time
-                    predictions[stopNums[i]].sort(function(a, b) {
-                        return a.predictedTime - b.predictedTime;
-                    });
+                    // if flipping, sort reverse
+                    if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
+                        predictions[stopNums[i]].sort(function(a, b) {
+                            return b.predictedTime - a.predictedTime;
+                        });
+                    } else {
+                        // sort by arrival/departure time
+                        predictions[stopNums[i]].sort(function(a, b) {
+                            return a.predictedTime - b.predictedTime;
+                        });
+                    }
 
                     for (var j = 0; j < predictions[stopNums[i]].length; j++) {
                         prediction = predictions[stopNums[i]][j]
@@ -263,7 +279,7 @@
                             showVehicleId = true;
                         }
 
-                        var predictionMessage = formatPredictionMessage(now, prediction, showNegative, showVehicleId)
+                        var predictionMessage = formatPredictionMessage(now, prediction, stopNums[i], showNegative, showVehicleId)
 
                         if (predictionMessage) {
                             var predictionEl = document.createElement('div');
@@ -275,9 +291,14 @@
                 }
             }
 
-            function formatPredictionMessage(now, prediction, showNegative, showVehicleId){ 
+            function formatPredictionMessage(now, prediction, stopNum, showNegative, showVehicleId){ 
                 var predictedTime = prediction.predictedTime
                 var minLeft = Math.round((predictedTime - now) / msPerMin)
+                console.log(minLeft)
+                if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
+                    minLeft = stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"] - minLeft
+                }
+                console.log(minLeft)
                 
                 var timeMessage = "";
                 
