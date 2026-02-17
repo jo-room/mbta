@@ -32,13 +32,19 @@
         }*/
     </style>
     <body>
-        <h1 id="title"></h1>
-        <div id="subtitle">
-            <span id="clock"></span>
-            <span>Polls every minute. All times device time</span>
-        </div>
-        <div id="message"></div>
+        <h1 id="title">Schedules</h1>
+        <div id="subtitle"></div>
         <div id="persistentMessage"></div>
+        <!-- <form> -->
+          <label for="datePicker">Select date:</label>
+          <input
+          type="datetime-local"
+          id="datePicker"
+          name="datePicker"
+          value="2000-01-01"/>
+          <input type="submit" value="Get schedule" onclick="event.preventDefault(); callAPIs();"/>
+        <!-- </form> -->
+        <div id="message"></div>
         <div id="content"></div>
         <div id="info"></div>
         <script type="text/javascript">
@@ -53,17 +59,27 @@
             var pollNum = 0
             var latestReturnedPollNum = 0
             
-            var pollIntervalID;
+            // var pollIntervalID;
             
-            var predictionData;
+            var scheduleData;
 
             var apiKey = getQueryVariable("key")
             var stopsQueryParam = getQueryVariable("stops")
 
+            function toLocalISOString(date) {
+              const localDate = new Date(date - date.getTimezoneOffset() * 60000);
+
+              localDate.setSeconds(null);
+              localDate.setMilliseconds(null);
+              return localDate.toISOString().slice(0, -1);
+            }
+            document.getElementById('datePicker').value = toLocalISOString(new Date());
+            document.getElementById('subtitle').innerText = "All times device time (" + Intl.DateTimeFormat().resolvedOptions().timeZone + ")"
+
             if (stopsQueryParam) {
                 configureStops()
             } else {
-                document.getElementById("subtitle").innerHTML = '<p>No stops specified. Please <a href="https://jo-room.github.io/mbta/configure.html">configure stops</a>.</p><p><h2>Demo pages</h2>Simple configuration: <a href="https://jo-room.github.io/mbta/?stops=178,70154">https://jo-room.github.io/mbta/?stops=178,70154</a>.<br>The same stops, but with a fancy configuration: <a href="https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D">https://jo-room.github.io/mbta/?stops=178,70154&config=%7B%22178%22:%7B%22name%22:%22Near%20Copley%20Square%22,%22message%22:%225min%20away%22,%22filterRoutes%22:%5B%2239%22,%229%22%5D,%22minMinutesAway%22:4,%22maxNumPredictions%22:10%7D,%2270154%22:%7B%22maxNumPredictions%22:5%7D,%22title%22:%22Example%20Title%22%7D</a>.</p><p><h2>Privacy</h2>Your web browser directly makes the request to the MBTA. These are static pages hosted via GitHub Pages, there is no server hosted by me, and I\'m not doing any logging. So to say, there is no way for me to know your visits, stops, or configurations, or however else you use this website.</p><p><h2>Source code</h2><a href="https://github.com/jo-room/mbta">https://github.com/jo-room/mbta</a></p>'
+                document.getElementById("subtitle").innerHTML = '<p>No stops specified. Please configure stops.</p><p>Most bus stop IDs can be found on the Google Maps website (not the app). For others, I tried making a search <a href="https://jo-room.github.io/mbta/stops.html">here</a></p><p><h2>Demo pages</h2>Example configuration: <a href="https://jo-room.github.io/mbta/schedule?stops=178,70154">https://jo-room.github.io/mbta/schedule?stops=178,70154</a>.<p>Right now, this only really supports the stops= query param, and does not actually support options.</p><p><h2>Privacy</h2>Your web browser directly makes the request to the MBTA. These are static pages hosted via GitHub Pages, there is no server hosted by me, and I\'m not doing any logging. So to say, there is no way for me to know your visits, stops, or configurations, or however else you use this website.</p><p><h2>Source code</h2><a href="https://github.com/jo-room/mbta">https://github.com/jo-room/mbta</a></p>'
             }
 
             function configureStops(){
@@ -76,7 +92,7 @@
                         document.title = stopConfigs["title"] + " " + document.title
                     }
                 }
-                document.getElementById("info").innerHTML = '<p>Configure stop(s) <a href="configure.html' + window.location.search + '">here</a>.'
+                // document.getElementById("info").innerHTML = '<p>Configure stop(s) <a href="configure.html' + window.location.search + '">here</a>.'
 
                 getAndSetStops()
             }
@@ -111,10 +127,6 @@
                                title = originalTitle
                             }
 
-                            if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["estimateLastDepartedFromMinsAway"]) {
-                                title += " (how far from " + stopConfigs[stopNums[i]]["estimateLastDepartedFromMinsAway"] + "min away from " + originalTitle + ")"
-                            }
-
                             if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["message"]) {
                                 title += " (" + stopConfigs[stopNums[i]]["message"] + ")"
                             }
@@ -125,7 +137,7 @@
                        callAPIs()
                     }
                 };
-                pollIntervalID = setInterval(callAPIs, pollingInterval);
+                // pollIntervalID = setInterval(callAPIs, pollingInterval);
                 xhttp.open("GET", "https://api-v3.mbta.com/stops" + "?filter[id]=" + stopNums.join(",") + "&fields[stop]=name,description", true);
                 if (apiKey) {
                     xhttp.setRequestHeader('x-api-key', apiKey)
@@ -133,32 +145,38 @@
                 xhttp.send();
             }
 
+            function handleSubmit(event) {
+              debugger;
+                event.preventDefault();
+                callAPIs()
+            }
 
             function callAPIs() {
                 console.log('polling', pollNum)
-                getPredictions()
+                getSchedules()
             }
 
-            function getPredictions(){
+            function getSchedules(){
                 var xhttp = new XMLHttpRequest();
                 pollNum++;
                 var currentPollNum = pollNum
+                console.log(currentPollNum)
 
-                var now = new Date()
-                var hours = now.getHours();
-                var minutes = now.getMinutes();
-                if (minutes < 10) {
-                    minutes = "0" + minutes
-                }
-                var timeMessage;
-                if (hours < 12){
-                    timeMessage = hours + ":" + minutes + "am"
-                } else if (hours == 12) {
-                    timeMessage = hours + ":" + minutes + "pm"
-                } else {
-                    timeMessage = hours - 12 + ":" + minutes + "pm"
-                }
-                document.getElementById("clock").innerText = timeMessage
+                // var now = new Date()
+                // var hours = now.getHours();
+                // var minutes = now.getMinutes();
+                // if (minutes < 10) {
+                //     minutes = "0" + minutes
+                // }
+                // var timeMessage;
+                // if (hours < 12){
+                //     timeMessage = hours + ":" + minutes + "am"
+                // } else if (hours == 12) {
+                //     timeMessage = hours + ":" + minutes + "pm"
+                // } else {
+                //     timeMessage = hours - 12 + ":" + minutes + "pm"
+                // }
+                // document.getElementById("clock").innerText = timeMessage
             
                 xhttp.onerror = function(event) {
                     document.getElementById("message").innerText = "API call error: " + JSON.stringify(event)
@@ -167,12 +185,17 @@
                     // only update if it's the most recent request to have come back
                     if (xhttp.readyState == XMLHttpRequest.DONE && latestReturnedPollNum < currentPollNum) {
                         latestReturnedPollNum = currentPollNum;
-                        predictionData = JSON.parse(xhttp.response).data
-                        document.getElementById("message").innerText = ""
+                        scheduleData = JSON.parse(xhttp.response).data
+                        document.getElementById("message").innerText = "Showing schedule for " + (new Date(scheduleData[0].attributes.arrival_time)).toLocaleDateString()
                         updateUI()
                     }
                 };
-                xhttp.open("GET", "https://api-v3.mbta.com/predictions/?filter[stop]=" + stopNums.join(",") + "&sort=arrival_time", true);
+
+                var selectedDateInEt = new Date(document.getElementById('datePicker').value).toLocaleString('sv', { timeZone: 'America/New_York'})
+                var [date, time] = selectedDateInEt.split(" ")
+                var splitTime = time.split(":")
+
+                xhttp.open("GET", "https://api-v3.mbta.com/schedules/?page[limit]=20&sort=arrival_time&filter[stop]=" + stopNums.join(",") + "&date=" + date + "&filter[min_time]=" + splitTime[0] +":" + splitTime[1], true);
                 if (apiKey) {
                     xhttp.setRequestHeader('x-api-key', apiKey)
                 }
@@ -181,12 +204,6 @@
 
 
             function updateUI(){
-                if (predictionData) {
-                    updatePredictions()
-                }
-            }
-
-            function updatePredictions(){
                 var predictions = {}
                 var stopRouteDirections = {}
                 for (var i = 0; i < stopNums.length; i++) {
@@ -195,18 +212,18 @@
                 }
 
                 var now = Date.now()
-                for (var i = 0; i < predictionData.length; i++) {
-                    var prediction = predictionData[i]
-                    var stopNum = prediction.relationships.stop.data.id
-                    var route = prediction.relationships.route.data.id
+                for (var i = 0; i < scheduleData.length; i++) {
+                    var schedule = scheduleData[i]
+                    var stopNum =schedule.relationships.stop.data.id
+                    var route = schedule.relationships.route.data.id
 
-                    if (prediction.attributes.departure_time) { // if not final stop
+                    if (schedule.attributes.departure_time) { // if not final stop
                         if (stopRouteDirections[stopNum][route]) {
-                            if (stopRouteDirections[stopNum][route] != prediction.attributes.direction_id) {
+                            if (stopRouteDirections[stopNum][route] != schedule.attributes.direction_id) {
                                 document.getElementById("persistentMessage").innerText = "Warning: unexpected multiple directions detected for route " + route + ". This is probably a stop that services multiple directions in the middle of a route. Please talk to me about this so I can consider adding in the direction. In the meantime, please use the MBTA website because these predictions don't distinguish which direction."
                             }
                         } else {
-                            stopRouteDirections[stopNum][route] = prediction.attributes.direction_id
+                            stopRouteDirections[stopNum][route] = schedule.attributes.direction_id
                         }
                     }
 
@@ -215,22 +232,22 @@
                         continue;
                     }
 
-                    var vehicleId;
-                    if (prediction.relationships.vehicle.data) {
-                        vehicleId = prediction.relationships.vehicle.data.id
-                    }
+                    // var vehicleId;
+                    // if (schedule.relationships.vehicle.data) {
+                    //     vehicleId = schedule.relationships.vehicle.data.id
+                    // }
 
                     var predictedTime
-                    if (!prediction.attributes.arrival_time){
-                        predictedTime = new Date(prediction.attributes.departure_time)
+                    if (!schedule.attributes.arrival_time){
+                        predictedTime = new Date(schedule.attributes.departure_time)
                     } else {
-                        predictedTime = new Date(prediction.attributes.arrival_time)       
+                        predictedTime = new Date(schedule.attributes.arrival_time)       
                     }
 
                     // departure_time: When the vehicle is now predicted to depart. null if the last stop (*/relationships/stop/data/id) on the trip
-                    var shouldInclude = prediction.attributes.departure_time !== null && !(
+                    var shouldInclude = schedule.attributes.departure_time !== null && !(
                         (stopConfigs[stopNum] && stopConfigs[stopNum]["filterRoutes"] && (stopConfigs[stopNum]["filterRoutes"].indexOf(route) === -1))
-                         || prediction.attributes.schedule_relationship === "CANCELLED")
+                         || schedule.attributes.schedule_relationship === "CANCELLED")
 
                     if (shouldInclude && stopConfigs[stopNum] && stopConfigs[stopNum]["minMinutesAway"]) {
                         var minLeft = Math.round((predictedTime - now) / msPerMin)
@@ -241,12 +258,13 @@
 
                     if (shouldInclude) {
                         predictions[stopNum].push({
-                            'id': prediction.id,
+                            'id': schedule.id,
                             'route': route,
-                            'status': prediction.attributes.status,
+                            'status': schedule.attributes.status,
                             'predictedTime': predictedTime,
-                            'arrivalUncertainty': prediction.attributes.arrival_uncertainty,
-                            'vehicleId': vehicleId,
+                            'arrivalUncertainty': schedule.attributes.arrival_uncertainty,
+                            'directionId': schedule.attributes.direction_id
+                            // 'vehicleId': vehicleId,
                         })
                     }
                 }
@@ -255,17 +273,17 @@
                     var newStopEl = document.createElement('div');
                     newStopEl.setAttribute('id', "stop-body-"+ stopNums[i])
 
-                    // if flipping, sort reverse
-                    if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
-                        predictions[stopNums[i]].sort(function(a, b) {
-                            return b.predictedTime - a.predictedTime;
-                        });
-                    } else {
+                    // // if flipping, sort reverse
+                    // if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
+                    //     predictions[stopNums[i]].sort(function(a, b) {
+                    //         return b.predictedTime - a.predictedTime;
+                    //     });
+                    // } else {
                         // sort by arrival/departure time
                         predictions[stopNums[i]].sort(function(a, b) {
                             return a.predictedTime - b.predictedTime;
                         });
-                    }
+                    // }
 
                     for (var j = 0; j < predictions[stopNums[i]].length; j++) {
                         prediction = predictions[stopNums[i]][j]
@@ -274,16 +292,16 @@
                             showNegative = true;
                         }
 
-                        var showVehicleId = false;
-                        if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["showVehicleId"]) {
-                            showVehicleId = true;
-                        }
+                        // var showVehicleId = false;
+                        // if (stopConfigs[stopNums[i]] && stopConfigs[stopNums[i]]["showVehicleId"]) {
+                        //     showVehicleId = true;
+                        // }
 
-                        var predictionMessage = formatPredictionMessage(now, prediction, stopNums[i], showNegative, showVehicleId)
+                        var predictionMessage = formatPredictionMessage(now, prediction, stopNums[i], showNegative)
 
                         if (predictionMessage) {
                             var predictionEl = document.createElement('div');
-                            predictionEl.innerText = predictionMessage
+                            predictionEl.innerHTML = predictionMessage
                             newStopEl.appendChild(predictionEl)
                         }
                     }
@@ -291,39 +309,39 @@
                 }
             }
 
-            function formatPredictionMessage(now, prediction, stopNum, showNegative, showVehicleId){ 
+            function formatPredictionMessage(now, prediction, stopNum, showNegative){ 
                 var predictedTime = prediction.predictedTime
-                var minLeft = Math.round((predictedTime - now) / msPerMin)
-                console.log(minLeft)
-                if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
-                    minLeft = stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"] - minLeft
+                // var minLeft = Math.round((predictedTime - now) / msPerMin)
+                // console.log(minLeft)
+                // if (stopConfigs[stopNum] && stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"]) {
+                //     minLeft = stopConfigs[stopNum]["estimateLastDepartedFromMinsAway"] - minLeft
+                // }
+                // console.log(minLeft)
+                
+                // var timeMessage = "";
+                
+                // if (minLeft < 0 && !showNegative) {
+                //     return null
+                // } else if (minLeft < 60) {
+                //     timeMessage = minLeft + " min"
+                // } else {
+                var hours = predictedTime.getHours();
+                var minutes = predictedTime.getMinutes();
+                if (minutes < 10) {
+                    minutes = "0" + minutes
                 }
-                console.log(minLeft)
-                
-                var timeMessage = "";
-                
-                if (minLeft < 0 && !showNegative) {
-                    return null
-                } else if (minLeft < 60) {
-                    timeMessage = minLeft + " min"
+                if (hours == 0) {
+                    timeMessage = 12 + "." + minutes + " am"
+                } else if (hours < 12) {
+                    timeMessage = hours + "." + minutes + " am"
+                } else if (hours == 12) {
+                    timeMessage = hours + "." + minutes + " pm"
                 } else {
-                    var hours = predictedTime.getHours();
-                    var minutes = predictedTime.getMinutes();
-                    if (minutes < 10) {
-                        minutes = "0" + minutes
-                    }
-                    if (hours == 0) {
-                        timeMessage = 12 + "." + minutes + " am"
-                    } else if (hours < 12) {
-                        timeMessage = hours + "." + minutes + " am"
-                    } else if (hours == 12) {
-                        timeMessage = hours + "." + minutes + " pm"
-                    } else {
-                        timeMessage = hours - 12 + "." + minutes + " pm"
-                    }
+                    timeMessage = hours - 12 + "." + minutes + " pm"
                 }
+                // }
 
-                var predictionMessage = prediction.route + ": " + timeMessage
+                var predictionMessage = "<a href="+ "'https://www.mbta.com/schedules/"+ prediction.route + "/line?schedule_direction%5Bdirection_id%5D="+ prediction.directionId+"'" + ">" + prediction.route + "</a>" + ": " + timeMessage
 
                 if (prediction.status){
                     predictionMessage += " - " + prediction.status
@@ -349,7 +367,7 @@
                             // Bus: Valid real-time prediction
                             break;
                         case prediction.arrivalUncertainty == 300:
-                            // Bus: Real-time prediction not available. This code is primarily used when a vehicle has not yet been assigned to the trip, (i.e. because the block has not started yet). It is a schedule-based prediction, but we adjust the schedule-based prediction time using observed historical travel times to make predictions more accurate than the schedule.
+                            // Bus: Real-time prediction not available. This code is primarily used when a vehicle has not yet been assigned to the trip, (i.e. because the block has not started yet). It is a schedule-based prediction, but we adjust the schedule-based prediction time using observed historical travel times to make predictions more accurate than the prediction.
                             predictionMessage += " ~ adjusted schedule"
                             break;
                         case prediction.arrivalUncertainty == 301:
@@ -364,9 +382,9 @@
                     }
                 }
 
-                if (showVehicleId) {
-                    predictionMessage += " - " + prediction.vehicleId
-                }
+                // if (showVehicleId) {
+                //     predictionMessage += " - " + prediction.vehicleId
+                // }
                 
                 return predictionMessage
             }
@@ -383,3 +401,4 @@
         </script>
     </body>
 </html>
+
